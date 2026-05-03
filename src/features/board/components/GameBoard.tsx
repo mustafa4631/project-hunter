@@ -9,7 +9,7 @@ import useGameStore from '@/store/gameStore'
 import { Button } from '@/features/ui/components/Button'
 import { cn } from '@/lib/utils'
 
-// ─── Lobby Modal ──────────────────────────────────────────────────────────────
+// ─── Lobby Modal ───────────────────────────────────────────────────────────────
 function LobbyModal() {
   const { initGame } = useGameStore()
   const [name, setName] = React.useState('')
@@ -35,14 +35,8 @@ function LobbyModal() {
           className="px-4 py-2 bg-parchment text-earth-dark outline-none font-bold text-center w-full"
           onKeyDown={e => e.key === 'Enter' && handleStart()}
         />
-        {error && (
-          <p className="text-red-400 text-sm font-sans">{error}</p>
-        )}
-        <Button
-          onClick={handleStart}
-          disabled={name.trim().length < 2}
-          size="lg"
-        >
+        {error && <p className="text-red-400 text-sm font-sans">{error}</p>}
+        <Button onClick={handleStart} disabled={name.trim().length < 2} size="lg">
           Oyuna Başla
         </Button>
       </div>
@@ -50,7 +44,7 @@ function LobbyModal() {
   )
 }
 
-// ─── GameBoard ────────────────────────────────────────────────────────────────
+// ─── GameBoard ─────────────────────────────────────────────────────────────────
 export function GameBoard() {
   const {
     phase, players, currentPlayerIndex,
@@ -69,7 +63,7 @@ export function GameBoard() {
   const isPlayer1Turn = p1 && players[currentPlayerIndex]?.id === p1.id
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-earth-dark text-parchment font-sans">
+    <div className="h-screen w-screen overflow-hidden flex flex-col bg-earth-dark select-none text-parchment font-sans">
 
       {/* ── Lobby overlay ── */}
       {phase === 'lobby' && <LobbyModal />}
@@ -100,7 +94,7 @@ export function GameBoard() {
         )}
       </AnimatePresence>
 
-      {/* ── Trap flash overlay ── */}
+      {/* ── Trap flash ── */}
       <AnimatePresence>
         {gameMessage?.includes('KAPAN') && (
           <motion.div
@@ -114,7 +108,7 @@ export function GameBoard() {
         )}
       </AnimatePresence>
 
-      {/* ── Toast message ── */}
+      {/* ── Toast ── */}
       <AnimatePresence>
         {gameMessage && !gameMessage.includes('KAPAN') && phase !== 'finished' && (
           <motion.div
@@ -123,61 +117,59 @@ export function GameBoard() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.25 }}
-            className="fixed top-8 left-1/2 -translate-x-1/2 z-[70] bg-gold text-earth-dark px-8 py-4 font-serif text-3xl border-4 border-earth-dark shadow-2xl whitespace-nowrap"
+            className="fixed top-8 left-1/2 -translate-x-1/2 z-[70] bg-gold text-earth-dark px-8 py-4 font-serif text-3xl border-4 border-earth-dark whitespace-nowrap"
           >
             {gameMessage}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── TOP: AI player ── */}
+      {/* ── AI Player — 160px ── */}
       <div className={cn(
-        "h-[200px] shrink-0 overflow-hidden border-b border-forest px-6 py-3 transition-colors",
-        !isPlayer1Turn ? "border-l-8 border-l-forest" : ""
+        "h-[160px] shrink-0 border-b border-forest/40 px-6 py-2 transition-colors",
+        !isPlayer1Turn ? "border-l-4 border-l-forest" : ""
       )}>
-        {p2 && <PlayerArea player={p2} isOpponent />}
+        {p2 && <PlayerArea player={p2} isOpponent={true} />}
       </div>
 
-      {/* ── CENTER: Wilderness + Dice ── */}
-      <div className="flex-1 flex items-center justify-center gap-12 overflow-hidden px-4">
-        {/* Turn indicator */}
-        <div className="absolute top-[200px] left-1/2 -translate-x-1/2 mt-2 z-10">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPlayerIndex}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.25 }}
-              className="font-serif text-xl font-bold text-gold tracking-widest uppercase bg-earth-dark px-4 py-1 border border-gold/30"
-            >
-              {isPlayer1Turn ? 'Senin Sıran' : 'Rakibin Sırası'}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+      {/* ── Turn indicator — 40px ── */}
+      <div className="h-[40px] shrink-0 flex items-center justify-center border-b border-forest/20">
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={currentPlayerIndex}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            className="font-serif text-base font-bold text-gold tracking-widest uppercase"
+          >
+            {isPlayer1Turn ? 'Senin Sıran' : 'Rakibin Sırası'}
+          </motion.span>
+        </AnimatePresence>
+      </div>
 
+      {/* ── Center — flex-1 ── */}
+      <div className="flex-1 flex items-center justify-center gap-16 min-h-0 pr-[190px]">
         <WildernessZone />
         <Dice />
       </div>
 
-      {/* ── BOTTOM: Human player ── */}
+      {/* ── Human Player — 180px ── */}
       <div className={cn(
-        "h-[220px] shrink-0 overflow-hidden border-t border-forest px-6 py-3 transition-colors",
-        isPlayer1Turn ? "border-l-8 border-l-forest" : ""
+        "h-[180px] shrink-0 border-t border-forest/40 px-6 py-2 transition-colors",
+        isPlayer1Turn ? "border-l-4 border-l-forest" : ""
       )}>
-        {p1 && <PlayerArea player={p1} />}
+        {p1 && <PlayerArea player={p1} isOpponent={false} />}
       </div>
 
-      {/* ── RIGHT: Game log (fixed) ── */}
-      <div className="fixed right-0 top-0 h-screen w-[200px] border-l border-forest bg-earth-dark overflow-y-auto p-3 z-20">
-        <h3 className="font-serif text-gold text-sm text-center mb-3 uppercase tracking-widest border-b border-forest/30 pb-2">
-          Oyun Günlüğü
-        </h3>
+      {/* ── Fixed Log panel ── */}
+      <div className="fixed right-0 top-0 h-screen w-[190px] border-l border-forest/40 bg-earth-dark/95 overflow-y-auto p-3 z-10">
+        <p className="text-gold font-semibold text-xs tracking-widest mb-2 border-b border-forest/30 pb-2">
+          OYUN GÜNLÜĞÜ
+        </p>
         <div className="flex flex-col gap-2 text-xs font-mono text-parchment-dark">
-          {log.slice(0, 10).map((entry, idx) => (
-            <div key={idx} className="border-b border-parchment/10 pb-1">
-              {entry}
-            </div>
+          {log.slice(0, 12).map((entry, idx) => (
+            <div key={idx} className="border-b border-parchment/10 pb-1">{entry}</div>
           ))}
         </div>
       </div>

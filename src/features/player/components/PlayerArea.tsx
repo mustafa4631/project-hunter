@@ -14,7 +14,8 @@ interface PlayerAreaProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Visual representation of a player's hand, score, and caught prey
+ * Visual representation of a player's hand, score, and caught prey.
+ * When isOpponent=true, tool cards are hidden (face-down backs shown).
  */
 export function PlayerArea({ player, isOpponent = false, className, ...props }: PlayerAreaProps) {
   const {
@@ -26,10 +27,9 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
   const isCurrentPlayer = players[currentPlayerIndex]?.id === player.id
   const canPlayTools = isCurrentPlayer && !isOpponent && !player.isAI && !diceRolled && !pendingTrapTarget
 
-  // Score bounce: track previous score to detect changes
+  // Score bounce via CSS
   const prevScore = React.useRef(player.score)
   const [scoreBounce, setScoreBounce] = React.useState(false)
-
   React.useEffect(() => {
     if (player.score > prevScore.current) {
       setScoreBounce(true)
@@ -42,73 +42,75 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
 
   const handleToolClick = (toolType: string) => {
     if (!canPlayTools) return
-    if (toolType === 'trap') {
-      setPendingTrapTarget(true)
-    } else if (toolType === 'binoculars') {
-      playBinoculars()
-    } else if (toolType === 'bait') {
-      playBait()
-    }
+    if (toolType === 'trap') setPendingTrapTarget(true)
+    else if (toolType === 'binoculars') playBinoculars()
+    else if (toolType === 'bait') playBait()
   }
 
   const handleAreaClick = () => {
-    if (isOpponent && pendingTrapTarget) {
-      playTrap(player.id)
-    }
+    if (isOpponent && pendingTrapTarget) playTrap(player.id)
   }
 
   return (
     <div
       onClick={handleAreaClick}
       className={cn(
-        'flex flex-col w-full h-full gap-2 transition-all',
-        isOpponent ? 'opacity-80' : '',
-        isOpponent && pendingTrapTarget ? 'cursor-pointer ring-4 ring-gold bg-earth-dark/80' : '',
+        'relative flex flex-row items-center gap-6 w-full h-full',
+        isOpponent && pendingTrapTarget ? 'cursor-pointer ring-2 ring-gold' : '',
         className
       )}
       {...props}
     >
+      {/* Trap target hint */}
       {isOpponent && pendingTrapTarget && (
-        <div className="absolute top-0 left-0 w-full h-full bg-earth-dark/50 flex items-center justify-center z-10 pointer-events-none">
-          <span className="bg-gold text-earth-dark font-bold px-4 py-2 text-xl border-2 border-earth-dark animate-pulse">
+        <div className="absolute inset-0 bg-earth-dark/50 flex items-center justify-center z-10 pointer-events-none">
+          <span className="bg-gold text-earth-dark font-bold px-4 py-2 text-lg border-2 border-earth-dark animate-pulse">
             Hedef Seç
           </span>
         </div>
       )}
 
-      {/* Player Header */}
-      <div className={cn("flex items-center gap-3 flex-wrap", isOpponent ? "justify-center" : "justify-start")}>
-        <h2 className="font-serif text-xl font-bold text-parchment">
-          {player.name}
-        </h2>
-        <span
-          className={cn(
-            'transition-transform duration-300',
-            scoreBounce ? 'scale-125' : 'scale-100'
-          )}
-        >
-          <Badge variant="gold" className="text-sm px-3 py-1">
-            {player.score} Puan
-          </Badge>
+      {/* Name + Score */}
+      <div className="flex flex-col gap-1 shrink-0 min-w-[110px]">
+        <h2 className="font-serif text-lg font-bold text-parchment leading-tight">{player.name}</h2>
+        <span className={cn('transition-transform duration-200', scoreBounce ? 'scale-125' : 'scale-100')}>
+          <Badge variant="gold" className="text-xs px-2 py-0.5">{player.score} Puan</Badge>
         </span>
         {player.isSkipped && (
-          <Badge variant="danger" className="text-sm px-3 py-1">
-            ⛔ Tur Atlandı
-          </Badge>
+          <Badge variant="danger" className="text-xs px-2 py-0.5">⛔ Atlandı</Badge>
         )}
         {player.hasBait && (
-          <Badge variant="gold" className="text-sm px-3 py-1">
-            🎯 Yem Aktif (+1)
-          </Badge>
+          <Badge variant="gold" className="text-xs px-2 py-0.5">🎯 Yem (+1)</Badge>
         )}
       </div>
 
-      <div className={cn("flex flex-wrap gap-6 overflow-hidden", isOpponent ? "justify-center" : "justify-start")}>
-        {/* Tool Cards (Hand) */}
-        {player.hand.length > 0 && (
+      {/* Tool Cards */}
+      <div className="flex flex-col gap-1 shrink-0">
+        {isOpponent ? (
+          /* Face-down card backs for opponent */
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-parchment-dark uppercase tracking-wider">
-              {isOpponent ? 'Eldeki Kartlar' : 'Elindeki Kartlar'}
+            <span className="text-[10px] text-parchment-dark uppercase tracking-wider">
+              Elde: {player.hand.length} kart
+            </span>
+            <div className="flex gap-2">
+              {player.hand.map((card, idx) => (
+                <div
+                  key={card.id || idx}
+                  className="w-16 h-24 rounded border-2 border-forest bg-earth-dark flex items-center justify-center text-gold text-2xl"
+                >
+                  🂠
+                </div>
+              ))}
+              {player.hand.length === 0 && (
+                <span className="text-parchment-dark/50 text-xs italic">Kart yok</span>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Face-up cards for human player */
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-parchment-dark uppercase tracking-wider">
+              {player.hand.length > 0 ? 'Elindeki Kartlar' : 'El boş'}
             </span>
             <div className="flex gap-2 relative">
               {player.hand.map((card, idx) => (
@@ -116,8 +118,8 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
                   key={card.id || idx}
                   onClick={() => handleToolClick(card.toolType)}
                   className={cn(
-                    "transition-transform",
-                    canPlayTools && "cursor-pointer hover:-translate-y-2"
+                    'transition-transform',
+                    canPlayTools && 'cursor-pointer hover:-translate-y-2'
                   )}
                 >
                   <ToolCard card={card} />
@@ -129,23 +131,23 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
             </div>
           </div>
         )}
-
-        {/* Caught Prey */}
-        {player.caughtPrey.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-parchment-dark uppercase tracking-wider">
-              Avlananlar
-            </span>
-            <div className="flex gap-2">
-              {player.caughtPrey.map((card, idx) => (
-                <div key={card.id + idx} className="scale-75 origin-top-left -mr-8">
-                  <PreyCard card={card} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Caught Prey — always visible (public info) */}
+      {player.caughtPrey.length > 0 && (
+        <div className="flex flex-col gap-1 overflow-x-auto">
+          <span className="text-[10px] text-parchment-dark uppercase tracking-wider shrink-0">
+            Avlananlar ({player.caughtPrey.length})
+          </span>
+          <div className="flex gap-1">
+            {player.caughtPrey.map((card, idx) => (
+              <div key={card.id + idx} className="scale-[0.6] origin-top-left -mr-12 shrink-0">
+                <PreyCard card={card} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

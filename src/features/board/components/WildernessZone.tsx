@@ -6,60 +6,39 @@ import useGameStore from '@/store/gameStore'
 import { cn } from '@/lib/utils'
 
 /**
- * Center play area showing the current active prey
+ * Center play area showing the current active prey card.
+ * Title removed to save vertical space.
  */
 export function WildernessZone({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  const { wilderness, rollSuccess, consecutiveFails } = useGameStore()
+  const { wilderness, rollSuccess } = useGameStore()
 
   const currentCard = wilderness[0]
   const isFailed = rollSuccess === false
 
   return (
     <div
-      className={cn(
-        'flex flex-col items-center gap-4 p-4 bg-earth-dark/80 border-y-4 border-forest',
-        className
-      )}
+      className={cn('flex flex-col items-center gap-3', className)}
       {...props}
     >
-      <div className="flex flex-col items-center">
-        <h2 className="font-serif text-2xl font-bold text-parchment tracking-widest">
-          AV SAHASI
-        </h2>
-        <span className="text-xs text-parchment-dark tracking-widest uppercase">
-          Wilderness
-        </span>
-      </div>
-
-      <div className="flex flex-col items-center justify-center h-[260px]">
-        {currentCard ? (
+      {currentCard ? (
+        <>
           <div
             className={cn(
-              'flex flex-col items-center gap-3 transition-all duration-300',
-              isFailed && 'animate-[shake_0.4s_ease]'
+              'w-36 h-52 border-4 rounded-xl transition-colors duration-300',
+              isFailed ? 'border-red-500' : 'border-transparent'
             )}
           >
-            <div
-              className={cn(
-                'w-36 h-52 border-4 rounded-xl transition-colors duration-300',
-                isFailed ? 'border-red-500' : 'border-transparent'
-              )}
-            >
-              <PreyCard
-                card={currentCard}
-                className="w-full h-full shadow-none"
-              />
-            </div>
-            <div className="font-serif text-xl text-gold font-bold bg-earth-dark px-4 py-2 border-2 border-gold/50 rounded-md">
-              Eşik: {currentCard.diceThreshold}{currentCard.id === 'p_leopard' ? ' (Tam 6)' : '+'}
-            </div>
+            <PreyCard card={currentCard} className="w-full h-full shadow-none" />
           </div>
-        ) : (
-          <div className="w-36 h-52 border-2 border-dashed border-forest/50 bg-earth-dark flex items-center justify-center opacity-50">
-            <span className="text-forest text-2xl text-center">Doğa<br />Boş</span>
+          <div className="font-serif text-lg text-gold font-bold bg-earth-dark px-4 py-1.5 border-2 border-gold/50 rounded-md">
+            Eşik: {currentCard.diceThreshold}{currentCard.id === 'p_leopard' ? ' (Tam 6)' : '+'}
           </div>
-        )}
-      </div>
+        </>
+      ) : (
+        <div className="w-36 h-52 border-2 border-dashed border-forest/50 bg-earth-dark flex items-center justify-center opacity-50 rounded-xl">
+          <span className="text-forest text-xl text-center">Doğa<br />Boş</span>
+        </div>
+      )}
     </div>
   )
 }
