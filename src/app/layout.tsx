@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn(inter.variable, crimsonPro.variable)}>
-      <body className="antialiased min-h-screen">
+      <body className="antialiased h-screen overflow-hidden">
         {children}
       </body>
     </html>
