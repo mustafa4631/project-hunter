@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { motion } from 'framer-motion'
 import { ToolCard as ToolCardType } from '@/types/game'
 import { cn } from '@/lib/utils'
 
@@ -11,12 +12,15 @@ interface ToolCardProps extends React.HTMLAttributes<HTMLDivElement> {
  */
 export function ToolCard({ card, className, ...props }: ToolCardProps) {
   return (
-    <div
+    <motion.div
+      whileHover={{ scale: 1.05, y: -4 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 300 }}
       className={cn(
         'relative flex flex-col justify-between w-32 h-44 p-2 bg-earth-dark border-2 border-gold select-none',
         className
       )}
-      {...props}
+      {...props as any}
     >
       {/* Icon */}
       <div className="flex-1 flex items-center justify-center text-5xl">
@@ -32,6 +36,6 @@ export function ToolCard({ card, className, ...props }: ToolCardProps) {
           {card.description}
         </p>
       </div>
-    </div>
+    </motion.div>
   )
 }

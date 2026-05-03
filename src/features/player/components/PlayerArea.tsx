@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { Player } from '@/types/game'
 import { ToolCard } from '@/features/cards/components/ToolCard'
 import { PreyCard } from '@/features/cards/components/PreyCard'
@@ -25,6 +26,14 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
 
   const isCurrentPlayer = players[currentPlayerIndex]?.id === player.id
   const canPlayTools = isCurrentPlayer && !isOpponent && !player.isAI && !diceRolled && !pendingTrapTarget
+
+  const [scope, animate] = useAnimate()
+
+  React.useEffect(() => {
+    if (player.score > 0) {
+      animate(scope.current, { scale: [1, 1.4, 1] }, { duration: 0.3, ease: "easeOut" })
+    }
+  }, [player.score, animate, scope])
 
   const handleToolClick = (toolType: string) => {
     if (!canPlayTools) return
@@ -68,9 +77,11 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
         <h2 className="font-serif text-2xl font-bold text-parchment">
           {player.name}
         </h2>
-        <Badge variant="gold" className="text-sm px-3 py-1">
-          {player.score} Puan
-        </Badge>
+        <motion.div ref={scope}>
+          <Badge variant="gold" className="text-sm px-3 py-1">
+            {player.score} Puan
+          </Badge>
+        </motion.div>
         {player.isSkipped && (
           <Badge variant="danger" className="text-sm px-3 py-1 ml-auto">
             ⛔ Tur Atlandı
@@ -117,11 +128,17 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
               Avlananlar
             </span>
             <div className="flex gap-2">
-              {player.caughtPrey.map((card, idx) => (
-                <div key={card.id + idx} className="scale-75 origin-top-left -mr-8">
-                  <PreyCard card={card} />
-                </div>
-              ))}
+              <AnimatePresence>
+                {player.caughtPrey.map((card, idx) => (
+                  <motion.div 
+                    key={card.id + idx}
+                    layoutId={card.id}
+                    className="scale-75 origin-top-left -mr-8"
+                  >
+                    <PreyCard card={card} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         )}
