@@ -11,12 +11,14 @@ import { cn } from '@/lib/utils'
 
 // ─── Lobby Modal ───────────────────────────────────────────────────────────────
 function LobbyModal() {
-  const { initGame } = useGameStore()
+  const initGame = useGameStore(s => s.initGame)
   const [name, setName] = React.useState('')
   const [error, setError] = React.useState('')
 
+  const isValid = name.trim().length >= 2
+
   const handleStart = () => {
-    if (name.trim().length < 2) {
+    if (!isValid) {
       setError('En az 2 karakter girin')
       return
     }
@@ -24,7 +26,10 @@ function LobbyModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-earth-dark/95">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-earth-dark/95"
+      onClick={e => e.stopPropagation()}
+    >
       <div className="bg-earth-dark border-2 border-forest flex flex-col gap-4 items-center p-10">
         <h2 className="font-serif text-3xl text-parchment">İsminizi Girin</h2>
         <input
@@ -32,13 +37,21 @@ function LobbyModal() {
           value={name}
           onChange={e => { setName(e.target.value); setError('') }}
           placeholder="Oyuncu adı..."
+          autoFocus
           className="px-4 py-2 bg-parchment text-earth-dark outline-none font-bold text-center w-full"
-          onKeyDown={e => e.key === 'Enter' && handleStart()}
+          onKeyDown={e => { if (e.key === 'Enter') handleStart() }}
         />
         {error && <p className="text-red-400 text-sm font-sans">{error}</p>}
-        <Button onClick={handleStart} disabled={name.trim().length < 2} size="lg">
+        <button
+          type="button"
+          onClick={handleStart}
+          className={cn(
+            'h-14 rounded-md px-8 text-lg font-medium transition-colors cursor-pointer bg-forest text-parchment hover:bg-forest-light',
+            !isValid && 'opacity-50'
+          )}
+        >
           Oyuna Başla
-        </Button>
+        </button>
       </div>
     </div>
   )
