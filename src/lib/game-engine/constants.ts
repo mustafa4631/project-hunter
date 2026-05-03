@@ -1,3 +1,8 @@
+/**
+ * Core Game Engine - Constants
+ * Tüm kart tanımları burada. Yeni kart eklemek için sadece bu dosyayı değiştir.
+ */
+
 import { PreyCard, ToolCard } from '@/types/game'
 
 export const PREY_CARDS: PreyCard[] = [

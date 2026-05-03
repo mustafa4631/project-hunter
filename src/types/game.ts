@@ -8,8 +8,8 @@ export interface PreyCard {
   name: string
   nameTr: string
   points: number
-  diceThreshold: number  // minimum dice roll to catch
-  icon: string           // emoji for now
+  diceThreshold: number // minimum dice roll to catch
+  icon: string // emoji for now
   rarity: 'common' | 'rare' | 'legendary'
 }
 
@@ -29,20 +29,23 @@ export interface Player {
   id: string
   name: string
   isAI: boolean
+  isOnline?: boolean // YENİ: Online mod için
   score: number
-  hand: ToolCard[]        // tool cards in hand
-  caughtPrey: PreyCard[]  // caught prey cards
-  isSkipped: boolean      // affected by trap
-  hasBait?: boolean       // affected by bait
+  hand: ToolCard[] // tool cards in hand
+  caughtPrey: PreyCard[] // caught prey cards
+  isSkipped: boolean // affected by trap
+  hasBait?: boolean // affected by bait
 }
 
 export interface GameState {
   phase: 'lobby' | 'playing' | 'finished'
+  gameMode?: 'solo' | 'online' // YENİ: Oyun modu
+  roomId?: string // YENİ: Online oda ID'si
   players: Player[]
   currentPlayerIndex: number
-  wilderness: PreyCard[]  // 3-4 cards in the middle
-  deck: PreyCard[]        // remaining prey deck
-  toolDeck: ToolCard[]    // remaining tool deck
+  wilderness: PreyCard[] // 3-4 cards in the middle
+  deck: PreyCard[] // remaining prey deck
+  toolDeck: ToolCard[] // remaining tool deck
   round: number
-  log: string[]           // game event log
+  log: string[] // game event log
 }
