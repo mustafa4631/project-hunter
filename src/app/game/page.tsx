@@ -7,7 +7,7 @@ export default function GamePage() {
   const phase = useGameStore(state => state.phase)
 
   return (
-    <main className="min-h-screen">
+    <main className="h-[100dvh] overflow-hidden">
       <GameBoard />
     </main>
   )

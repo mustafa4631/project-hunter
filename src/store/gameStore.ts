@@ -13,6 +13,8 @@ export interface GameStore extends GameState {
   _refillWilderness: () => void
   _checkGameOver: () => boolean
 
+  consecutiveFails: number
+
   diceValue: number | null
   diceRolled: boolean
   rollSuccess: boolean | null
@@ -43,6 +45,8 @@ const useGameStore = create<GameStore>()((set, get) => ({
   toolDeck: [],
   round: 1,
   log: [],
+
+  consecutiveFails: 0,
 
   diceValue: null,
   diceRolled: false,
@@ -93,6 +97,7 @@ const useGameStore = create<GameStore>()((set, get) => ({
       toolDeck: shuffledTools,
       round: 1,
       log: ['Oyun başladı!'],
+      consecutiveFails: 0,
       diceValue: null,
       diceRolled: false,
       rollSuccess: null,
@@ -154,21 +159,44 @@ const useGameStore = create<GameStore>()((set, get) => ({
              diceRolled: false,
              diceValue: null,
              rollSuccess: null,
-             binocularsActive: false
+             binocularsActive: false,
+             consecutiveFails: 0
           })
           get()._refillWilderness()
           get().endTurn()
        } else {
+          const newFails = currentState.consecutiveFails + 1
           const failMessage = currentPlayer.isAI 
             ? 'Rakip tutturamadı, sıra sende.' 
             : 'Tutturamadın, sıra rakibe geçti.'
-          set({
-             log: [failMessage, ...currentState.log],
-             diceRolled: false,
-             diceValue: null,
-             rollSuccess: null
-          })
-          get().endTurn()
+          
+          let failLog = [failMessage, ...currentState.log]
+
+          if (newFails >= 2) {
+             const missedPrey = currentState.wilderness[0]
+             const newDeck = shuffleArray([...currentState.deck, missedPrey])
+             
+             set({
+                consecutiveFails: 0,
+                log: ["Av kaçtı! Yeni av sahasına çıktı.", ...failLog],
+                diceRolled: false,
+                diceValue: null,
+                rollSuccess: null,
+                deck: newDeck,
+                wilderness: []
+             })
+             get()._refillWilderness()
+             get().endTurn()
+          } else {
+             set({
+                consecutiveFails: newFails,
+                log: failLog,
+                diceRolled: false,
+                diceValue: null,
+                rollSuccess: null
+             })
+             get().endTurn()
+          }
        }
     }, 1500)
   },

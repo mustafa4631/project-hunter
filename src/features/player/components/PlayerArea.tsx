@@ -48,7 +48,7 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
     <div
       onClick={handleAreaClick}
       className={cn(
-        'flex flex-col w-full max-w-5xl mx-auto p-4 gap-4 transition-all',
+        'flex flex-col w-full max-w-5xl mx-auto p-2 gap-2 transition-all',
         isOpponent ? 'opacity-80' : '',
         isOpponent && pendingTrapTarget ? 'cursor-pointer ring-4 ring-gold bg-earth-dark/80' : '',
         className

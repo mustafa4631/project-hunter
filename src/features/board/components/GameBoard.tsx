@@ -53,7 +53,7 @@ export function GameBoard() {
   const isPlayer1Turn = players[currentPlayerIndex]?.id === p1.id
 
   return (
-    <div className="grid grid-rows-[auto_1fr_auto] min-h-screen bg-earth-dark text-parchment font-sans overflow-hidden">
+    <div className="flex flex-col h-screen bg-earth-dark text-parchment font-sans overflow-hidden">
       
       {/* Game Message Toast */}
       {gameMessage && (
@@ -81,28 +81,30 @@ export function GameBoard() {
       )}
 
       {/* Top: Opponent Area */}
-      <section className={cn("pt-4 pb-2 border-b-2 bg-earth-dark/50 transition-colors", 
+      <section className={cn("flex-shrink-0 pt-2 pb-2 border-b-2 bg-earth-dark/50 transition-colors", 
         !isPlayer1Turn ? "border-l-8 border-l-forest border-b-forest/30" : "border-b-forest/30"
       )}>
         <PlayerArea player={p2} isOpponent />
       </section>
 
       {/* Center: Wilderness + Dice + Log */}
-      <section className="flex flex-col md:flex-row items-stretch justify-center relative flex-1">
+      <section className="flex flex-col md:flex-row items-stretch justify-center relative flex-1 min-h-0 overflow-visible z-10">
         
         {/* Main Center Area */}
-        <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8 relative">
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 font-serif text-4xl font-bold text-gold tracking-widest uppercase bg-earth-dark px-6 py-2 border-y-2 border-gold/30 z-20">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-4 relative min-h-0 overflow-visible">
+          <div className="font-serif text-2xl md:text-4xl font-bold text-gold tracking-widest uppercase bg-earth-dark px-6 py-2 border-y-2 border-gold/30 z-20 flex-shrink-0">
             {isPlayer1Turn ? 'Senin Sıran' : 'Rakibin Sırası'}
           </div>
-          <WildernessZone />
-          <div className="md:absolute md:right-12 xl:right-24 z-10">
+          <div className="flex-1 flex items-center justify-center min-h-0 w-full transform scale-[0.8] md:scale-100 origin-center -my-12 md:my-0">
+            <WildernessZone />
+          </div>
+          <div className="md:absolute md:right-12 xl:right-24 z-10 flex-shrink-0 transform scale-[0.8] md:scale-100 origin-right">
             <Dice />
           </div>
         </div>
 
         {/* Game Log Panel */}
-        <div className="w-[200px] border-l-2 border-forest/30 bg-parchment/10 flex flex-col p-4">
+        <div className="w-[200px] flex-shrink-0 border-l-2 border-forest/30 bg-parchment/10 flex flex-col p-4 h-full overflow-y-auto">
           <h3 className="font-serif text-gold text-sm text-center mb-4 uppercase tracking-widest border-b border-forest/30 pb-2">Oyun Günlüğü</h3>
           <div className="flex flex-col gap-2 overflow-y-auto text-xs font-mono text-parchment-dark">
             {log.slice(0, 8).map((entry, idx) => (
@@ -115,7 +117,7 @@ export function GameBoard() {
       </section>
 
       {/* Bottom: Current Player Area */}
-      <section className={cn("pt-2 pb-8 border-t-2 bg-earth-dark transition-colors",
+      <section className={cn("flex-shrink-0 pt-2 pb-2 border-t-2 bg-earth-dark transition-colors",
         isPlayer1Turn ? "border-l-8 border-l-forest border-t-forest" : "border-t-forest"
       )}>
         <PlayerArea player={p1} />

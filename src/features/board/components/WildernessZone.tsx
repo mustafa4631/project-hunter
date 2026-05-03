@@ -16,7 +16,7 @@ export function WildernessZone({ className, ...props }: React.HTMLAttributes<HTM
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-6 p-6 bg-earth-dark/80 border-y-4 border-forest w-full max-w-4xl mx-auto',
+        'flex flex-col items-center gap-4 p-4 bg-earth-dark/80 border-y-4 border-forest w-full max-w-4xl mx-auto',
         className
       )}
       {...props}
