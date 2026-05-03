@@ -1,11 +1,13 @@
 'use client'
 
 import * as React from 'react'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import useGameStore from '@/store/gameStore'
 
 /**
  * Visual representation of the Game Dice.
+ * Animation 1: shake + scale on roll via local state.
  */
 export function Dice({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const { rollAndClaim, diceValue, diceRolled, rollSuccess, currentPlayerIndex, players } = useGameStore()
@@ -24,12 +26,17 @@ export function Dice({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
     if (isDisabled || isRolling) return
     setIsRolling(true)
     rollAndClaim()
+    setTimeout(() => setIsRolling(false), 400)
   }
 
   return (
     <div className={cn('flex flex-col items-center gap-3', className)} {...props}>
-      {/* Dice box */}
-      <div
+      {/* Animated dice box */}
+      <motion.div
+        animate={isRolling
+          ? { rotate: [-20, 20, -15, 15, -8, 8, 0], scale: [1, 1.15, 1] }
+          : {}}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         role="button"
         tabIndex={isDisabled ? -1 : 0}
         onClick={handleClick}
@@ -38,14 +45,13 @@ export function Dice({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
           'flex items-center justify-center w-24 h-24 bg-parchment border-4 transition-colors select-none',
           diceRolled ? 'border-gold' : 'border-forest',
           !isDisabled && !isRolling && 'cursor-pointer hover:bg-parchment-dark',
-          isDisabled && 'opacity-50 cursor-not-allowed',
-          isRolling && 'animate-bounce'
+          isDisabled && 'opacity-50 cursor-not-allowed'
         )}
       >
         <span className="font-serif text-5xl font-bold text-earth-dark">
           {diceValue !== null ? diceValue : '?'}
         </span>
-      </div>
+      </motion.div>
 
       {/* Label / result */}
       <div className="flex flex-col items-center gap-1 min-h-[3rem] text-center">

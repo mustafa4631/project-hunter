@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { motion } from 'framer-motion'
 import { Player } from '@/types/game'
 import { ToolCard } from '@/features/cards/components/ToolCard'
 import { PreyCard } from '@/features/cards/components/PreyCard'
@@ -23,14 +24,13 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
   const isCurrentPlayer = players[currentPlayerIndex]?.id === player.id
   const canPlayTools = isCurrentPlayer && !isOpponent && !player.isAI && !diceRolled && !pendingTrapTarget
 
+  // Animation 3: score pulse
   const prevScore = React.useRef(player.score)
-  const [scoreBounce, setScoreBounce] = React.useState(false)
+  const [pulse, setPulse] = React.useState(false)
   React.useEffect(() => {
     if (player.score > prevScore.current) {
-      setScoreBounce(true)
-      const t = setTimeout(() => setScoreBounce(false), 350)
-      prevScore.current = player.score
-      return () => clearTimeout(t)
+      setPulse(true)
+      setTimeout(() => setPulse(false), 400)
     }
     prevScore.current = player.score
   }, [player.score])
@@ -68,16 +68,18 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
       {/* Name + Score */}
       <div className="flex flex-col items-center gap-1 shrink-0">
         <span className="font-serif text-lg font-bold text-parchment">{player.name}</span>
-        <span className={cn('transition-transform duration-200', scoreBounce ? 'scale-125' : 'scale-100')}>
+        <motion.div
+          animate={pulse ? { scale: [1, 1.35, 1] } : { scale: 1 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+        >
           <Badge variant="gold" className="text-xs px-2 py-0.5">{player.score} Puan</Badge>
-        </span>
+        </motion.div>
         {player.isSkipped && <Badge variant="danger" className="text-xs px-2 py-0.5">⛔ Atlandı</Badge>}
         {player.hasBait && <Badge variant="gold" className="text-xs px-2 py-0.5">🎯 Yem (+1)</Badge>}
       </div>
 
       {/* Tool Cards */}
       {isOpponent ? (
-        /* Face-down backs */
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             {player.hand.map((card, idx) => (
@@ -94,7 +96,6 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
           </span>
         </div>
       ) : (
-        /* Face-up cards */
         <div className="flex flex-col items-start gap-1 shrink-0">
           <span className="text-xs tracking-widest text-parchment/50 uppercase">
             Elindeki Kartlar

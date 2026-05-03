@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { WildernessZone } from './WildernessZone'
 import { PlayerArea } from '@/features/player/components/PlayerArea'
 import { Dice } from '@/features/dice/components/Dice'
@@ -64,6 +64,15 @@ export function GameBoard() {
     gameMessage, setGameMessage, initGame, log
   } = useGameStore()
 
+  // Animation 8: trap flash via local state
+  const [trapFlash, setTrapFlash] = React.useState(false)
+  React.useEffect(() => {
+    if (gameMessage?.includes('KAPAN')) {
+      setTrapFlash(true)
+      setTimeout(() => setTrapFlash(false), 600)
+    }
+  }, [gameMessage])
+
   React.useEffect(() => {
     if (gameMessage) {
       const timer = setTimeout(() => setGameMessage(''), 2500)
@@ -81,15 +90,29 @@ export function GameBoard() {
       {/* ── Lobby overlay ── */}
       {phase === 'lobby' && <LobbyModal />}
 
-      {/* ── Game Over overlay ── */}
-      <AnimatePresence>
-        {phase === 'finished' && p1 && p2 && (
+      {/* ── Animation 8: Trap flash ── */}
+      {trapFlash && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 0.25, 0] }}
+          transition={{ duration: 0.6 }}
+          className="fixed inset-0 z-40 bg-red-700 pointer-events-none"
+        />
+      )}
+
+      {/* ── Animation 7: Game Over overlay ── */}
+      {phase === 'finished' && p1 && p2 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="fixed inset-0 z-[90] bg-earth-dark/95 flex flex-col items-center justify-center gap-8"
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-[90] bg-earth-dark/95 flex flex-col items-center justify-center gap-8"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, type: 'spring', bounce: 0.4 }}
+            className="flex flex-col items-center gap-8"
           >
             <h1 className="font-serif text-6xl text-gold">{gameMessage}</h1>
             <div className="flex gap-12 font-serif text-2xl">
@@ -104,38 +127,21 @@ export function GameBoard() {
             </div>
             <Button onClick={() => initGame(p1.name)} size="lg">Tekrar Oyna</Button>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </motion.div>
+      )}
 
-      {/* ── Trap flash ── */}
-      <AnimatePresence>
-        {gameMessage?.includes('KAPAN') && (
-          <motion.div
-            key="trap-flash"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.35, 0] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="fixed inset-0 z-[80] bg-red-600 pointer-events-none"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* ── Toast ── */}
-      <AnimatePresence>
-        {gameMessage && !gameMessage.includes('KAPAN') && phase !== 'finished' && (
-          <motion.div
-            key="toast"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
-            className="fixed top-8 left-1/2 -translate-x-1/2 z-[70] bg-gold text-earth-dark px-8 py-4 font-serif text-3xl border-4 border-earth-dark whitespace-nowrap"
-          >
-            {gameMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ── Toast (non-trap messages) ── */}
+      {gameMessage && !gameMessage.includes('KAPAN') && phase !== 'finished' && (
+        <motion.div
+          key={gameMessage}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="fixed top-8 left-1/2 -translate-x-1/2 z-[70] bg-gold text-earth-dark px-8 py-4 font-serif text-3xl border-4 border-earth-dark whitespace-nowrap"
+        >
+          {gameMessage}
+        </motion.div>
+      )}
 
       {/* ── AI Player — 160px ── */}
       <div className={cn(
@@ -145,20 +151,17 @@ export function GameBoard() {
         {p2 && <PlayerArea player={p2} isOpponent={true} />}
       </div>
 
-      {/* ── Turn indicator — 40px ── */}
+      {/* ── Animation 4: Turn indicator — 40px ── */}
       <div className="h-[40px] shrink-0 flex items-center justify-center border-b border-forest/20">
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={currentPlayerIndex}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2 }}
-            className="font-serif text-base font-bold text-gold tracking-widest uppercase"
-          >
-            {isPlayer1Turn ? 'Senin Sıran' : 'Rakibin Sırası'}
-          </motion.span>
-        </AnimatePresence>
+        <motion.div
+          key={currentPlayerIndex}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="font-serif text-base font-bold text-gold tracking-widest uppercase"
+        >
+          {isPlayer1Turn ? 'Senin Sıran' : 'Rakibin Sırası'}
+        </motion.div>
       </div>
 
       {/* ── Center — flex-1, true vertical center ── */}
@@ -184,9 +187,18 @@ export function GameBoard() {
         <p className="text-gold font-semibold text-xs tracking-widest mb-2 border-b border-forest/30 pb-2">
           OYUN GÜNLÜĞÜ
         </p>
+        {/* Animation 6: log entries fade in from right */}
         <div className="flex flex-col gap-2 text-xs font-mono text-parchment-dark">
-          {log.slice(0, 12).map((entry, idx) => (
-            <div key={idx} className="border-b border-parchment/10 pb-1">{entry}</div>
+          {log.slice(0, 8).map((entry, i) => (
+            <motion.div
+              key={entry + i}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+              className="border-b border-parchment/10 pb-1"
+            >
+              {entry}
+            </motion.div>
           ))}
         </div>
       </div>
