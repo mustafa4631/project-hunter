@@ -126,8 +126,8 @@ export function GameBoard() {
 
       {/* ── AI Player — 160px ── */}
       <div className={cn(
-        "h-[160px] shrink-0 border-b border-forest/40 px-6 py-2 transition-colors",
-        !isPlayer1Turn ? "border-l-4 border-l-forest" : ""
+        'h-[160px] shrink-0 border-b border-forest/40 px-6 transition-colors',
+        !isPlayer1Turn ? 'border-l-4 border-l-forest' : ''
       )}>
         {p2 && <PlayerArea player={p2} isOpponent={true} />}
       </div>
@@ -148,16 +148,20 @@ export function GameBoard() {
         </AnimatePresence>
       </div>
 
-      {/* ── Center — flex-1 ── */}
+      {/* ── Center — flex-1, true vertical center ── */}
       <div className="flex-1 flex items-center justify-center gap-16 min-h-0 pr-[190px]">
-        <WildernessZone />
-        <Dice />
+        <div className="flex flex-col items-center justify-center">
+          <WildernessZone />
+        </div>
+        <div className="flex flex-col items-center justify-center">
+          <Dice />
+        </div>
       </div>
 
       {/* ── Human Player — 180px ── */}
       <div className={cn(
-        "h-[180px] shrink-0 border-t border-forest/40 px-6 py-2 transition-colors",
-        isPlayer1Turn ? "border-l-4 border-l-forest" : ""
+        'h-[180px] shrink-0 border-t border-forest/40 px-6 transition-colors',
+        isPlayer1Turn ? 'border-l-4 border-l-forest' : ''
       )}>
         {p1 && <PlayerArea player={p1} isOpponent={false} />}
       </div>

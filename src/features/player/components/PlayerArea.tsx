@@ -13,10 +13,6 @@ interface PlayerAreaProps extends React.HTMLAttributes<HTMLDivElement> {
   isOpponent?: boolean
 }
 
-/**
- * Visual representation of a player's hand, score, and caught prey.
- * When isOpponent=true, tool cards are hidden (face-down backs shown).
- */
 export function PlayerArea({ player, isOpponent = false, className, ...props }: PlayerAreaProps) {
   const {
     playTrap, playBinoculars, playBait,
@@ -27,7 +23,6 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
   const isCurrentPlayer = players[currentPlayerIndex]?.id === player.id
   const canPlayTools = isCurrentPlayer && !isOpponent && !player.isAI && !diceRolled && !pendingTrapTarget
 
-  // Score bounce via CSS
   const prevScore = React.useRef(player.score)
   const [scoreBounce, setScoreBounce] = React.useState(false)
   React.useEffect(() => {
@@ -55,7 +50,7 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
     <div
       onClick={handleAreaClick}
       className={cn(
-        'relative flex flex-row items-center gap-6 w-full h-full',
+        'relative flex items-center justify-center gap-8 h-full w-full',
         isOpponent && pendingTrapTarget ? 'cursor-pointer ring-2 ring-gold' : '',
         className
       )}
@@ -71,83 +66,75 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
       )}
 
       {/* Name + Score */}
-      <div className="flex flex-col gap-1 shrink-0 min-w-[110px]">
-        <h2 className="font-serif text-lg font-bold text-parchment leading-tight">{player.name}</h2>
+      <div className="flex flex-col items-center gap-1 shrink-0">
+        <span className="font-serif text-lg font-bold text-parchment">{player.name}</span>
         <span className={cn('transition-transform duration-200', scoreBounce ? 'scale-125' : 'scale-100')}>
           <Badge variant="gold" className="text-xs px-2 py-0.5">{player.score} Puan</Badge>
         </span>
-        {player.isSkipped && (
-          <Badge variant="danger" className="text-xs px-2 py-0.5">⛔ Atlandı</Badge>
-        )}
-        {player.hasBait && (
-          <Badge variant="gold" className="text-xs px-2 py-0.5">🎯 Yem (+1)</Badge>
-        )}
+        {player.isSkipped && <Badge variant="danger" className="text-xs px-2 py-0.5">⛔ Atlandı</Badge>}
+        {player.hasBait && <Badge variant="gold" className="text-xs px-2 py-0.5">🎯 Yem (+1)</Badge>}
       </div>
 
       {/* Tool Cards */}
-      <div className="flex flex-col gap-1 shrink-0">
-        {isOpponent ? (
-          /* Face-down card backs for opponent */
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] text-parchment-dark uppercase tracking-wider">
-              Elde: {player.hand.length} kart
-            </span>
-            <div className="flex gap-2">
-              {player.hand.map((card, idx) => (
-                <div
-                  key={card.id || idx}
-                  className="w-16 h-24 rounded border-2 border-forest bg-earth-dark flex items-center justify-center text-gold text-2xl"
-                >
-                  🂠
-                </div>
-              ))}
-              {player.hand.length === 0 && (
-                <span className="text-parchment-dark/50 text-xs italic">Kart yok</span>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* Face-up cards for human player */
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] text-parchment-dark uppercase tracking-wider">
-              {player.hand.length > 0 ? 'Elindeki Kartlar' : 'El boş'}
-            </span>
-            <div className="flex gap-2 relative">
-              {player.hand.map((card, idx) => (
-                <div
-                  key={card.id || idx}
-                  onClick={() => handleToolClick(card.toolType)}
-                  className={cn(
-                    'transition-transform',
-                    canPlayTools && 'cursor-pointer hover:-translate-y-2'
-                  )}
-                >
-                  <ToolCard card={card} />
-                </div>
-              ))}
-              {!canPlayTools && !isOpponent && player.hand.length > 0 && (
-                <div className="absolute inset-0 bg-earth-dark/20 z-10" />
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Caught Prey — always visible (public info) */}
-      {player.caughtPrey.length > 0 && (
-        <div className="flex flex-col gap-1 overflow-x-auto">
-          <span className="text-[10px] text-parchment-dark uppercase tracking-wider shrink-0">
-            Avlananlar ({player.caughtPrey.length})
-          </span>
-          <div className="flex gap-1">
-            {player.caughtPrey.map((card, idx) => (
-              <div key={card.id + idx} className="scale-[0.6] origin-top-left -mr-12 shrink-0">
-                <PreyCard card={card} />
+      {isOpponent ? (
+        /* Face-down backs */
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {player.hand.map((card, idx) => (
+              <div
+                key={card.id || idx}
+                className="w-16 h-24 rounded border-2 border-forest bg-earth-dark flex items-center justify-center text-gold text-2xl"
+              >
+                🂠
               </div>
             ))}
           </div>
+          <span className="text-xs tracking-widest text-parchment/50 uppercase">
+            Elde: {player.hand.length} kart
+          </span>
+        </div>
+      ) : (
+        /* Face-up cards */
+        <div className="flex flex-col items-start gap-1 shrink-0">
+          <span className="text-xs tracking-widest text-parchment/50 uppercase">
+            Elindeki Kartlar
+          </span>
+          <div className="relative flex gap-2">
+            {player.hand.length === 0 ? (
+              <span className="text-parchment/40 text-sm italic">El boş</span>
+            ) : (
+              player.hand.map((card, idx) => (
+                <div
+                  key={card.id || idx}
+                  onClick={() => handleToolClick(card.toolType)}
+                  className={cn('transition-transform', canPlayTools && 'cursor-pointer hover:-translate-y-2')}
+                >
+                  <ToolCard card={card} />
+                </div>
+              ))
+            )}
+            {!canPlayTools && !isOpponent && player.hand.length > 0 && (
+              <div className="absolute inset-0 bg-earth-dark/20 z-10" />
+            )}
+          </div>
         </div>
       )}
+
+      {/* Caught Prey — always visible */}
+      <div className="flex flex-col items-start gap-1">
+        {player.caughtPrey.length > 0 && (
+          <span className="text-xs tracking-widest text-parchment/50 uppercase">
+            Avlananlar ({player.caughtPrey.length})
+          </span>
+        )}
+        <div className="flex gap-1 items-end">
+          {player.caughtPrey.map((card, idx) => (
+            <div key={card.id + idx} className="scale-[0.6] origin-bottom-left -mr-10 shrink-0">
+              <PreyCard card={card} />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

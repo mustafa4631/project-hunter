@@ -6,7 +6,6 @@ import useGameStore from '@/store/gameStore'
 
 /**
  * Visual representation of the Game Dice.
- * CSS animate-bounce used for roll feedback.
  */
 export function Dice({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const { rollAndClaim, diceValue, diceRolled, rollSuccess, currentPlayerIndex, players } = useGameStore()
@@ -28,7 +27,8 @@ export function Dice({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className={cn('flex flex-col items-center gap-3', className)} {...props}>
+      {/* Dice box */}
       <div
         role="button"
         tabIndex={isDisabled ? -1 : 0}
@@ -39,30 +39,31 @@ export function Dice({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
           diceRolled ? 'border-gold' : 'border-forest',
           !isDisabled && !isRolling && 'cursor-pointer hover:bg-parchment-dark',
           isDisabled && 'opacity-50 cursor-not-allowed',
-          isRolling && 'animate-bounce',
-          className
+          isRolling && 'animate-bounce'
         )}
-        {...props}
       >
         <span className="font-serif text-5xl font-bold text-earth-dark">
           {diceValue !== null ? diceValue : '?'}
         </span>
       </div>
 
-      <div className="flex flex-col items-center min-h-[3rem] text-center">
+      {/* Label / result */}
+      <div className="flex flex-col items-center gap-1 min-h-[3rem] text-center">
         {!diceRolled ? (
           <span className="font-sans text-sm font-bold tracking-wide uppercase text-parchment-dark">
             Zar At &amp; Avlan
           </span>
         ) : (
-          <div className="font-bold">
+          <>
             {rollSuccess === true && (
-              <span className="text-gold block">✓ Avlandı!</span>
+              <span className="text-gold font-bold block">✓ Avlandı!</span>
             )}
             {rollSuccess === false && (
-              <span className="text-parchment-dark/70 block text-sm">✗ Yetersiz<br />Sıra rakibe geçti</span>
+              <span className="text-parchment-dark/70 font-bold text-sm block text-center">
+                ✗ Yetersiz<br />Sıra rakibe geçti
+              </span>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
