@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { Player } from '@/types/game'
 import { ToolCard } from '@/features/cards/components/ToolCard'
 import { PreyCard } from '@/features/cards/components/PreyCard'
@@ -18,8 +17,8 @@ interface PlayerAreaProps extends React.HTMLAttributes<HTMLDivElement> {
  * Visual representation of a player's hand, score, and caught prey
  */
 export function PlayerArea({ player, isOpponent = false, className, ...props }: PlayerAreaProps) {
-  const { 
-    playTrap, playBinoculars, playBait, 
+  const {
+    playTrap, playBinoculars, playBait,
     pendingTrapTarget, setPendingTrapTarget,
     currentPlayerIndex, players, diceRolled
   } = useGameStore()
@@ -27,17 +26,22 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
   const isCurrentPlayer = players[currentPlayerIndex]?.id === player.id
   const canPlayTools = isCurrentPlayer && !isOpponent && !player.isAI && !diceRolled && !pendingTrapTarget
 
-  const [scope, animate] = useAnimate()
+  // Score bounce: track previous score to detect changes
+  const prevScore = React.useRef(player.score)
+  const [scoreBounce, setScoreBounce] = React.useState(false)
 
   React.useEffect(() => {
-    if (player.score > 0) {
-      animate(scope.current, { scale: [1, 1.4, 1] }, { duration: 0.3, ease: "easeOut" })
+    if (player.score > prevScore.current) {
+      setScoreBounce(true)
+      const t = setTimeout(() => setScoreBounce(false), 350)
+      prevScore.current = player.score
+      return () => clearTimeout(t)
     }
-  }, [player.score, animate, scope])
+    prevScore.current = player.score
+  }, [player.score])
 
   const handleToolClick = (toolType: string) => {
     if (!canPlayTools) return
-    
     if (toolType === 'trap') {
       setPendingTrapTarget(true)
     } else if (toolType === 'binoculars') {
@@ -57,7 +61,7 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
     <div
       onClick={handleAreaClick}
       className={cn(
-        'flex flex-col w-full max-w-5xl mx-auto p-2 gap-2 transition-all',
+        'flex flex-col w-full h-full gap-2 transition-all',
         isOpponent ? 'opacity-80' : '',
         isOpponent && pendingTrapTarget ? 'cursor-pointer ring-4 ring-gold bg-earth-dark/80' : '',
         className
@@ -73,17 +77,22 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
       )}
 
       {/* Player Header */}
-      <div className={cn("flex items-center gap-4", isOpponent ? "justify-center" : "justify-start")}>
-        <h2 className="font-serif text-2xl font-bold text-parchment">
+      <div className={cn("flex items-center gap-3 flex-wrap", isOpponent ? "justify-center" : "justify-start")}>
+        <h2 className="font-serif text-xl font-bold text-parchment">
           {player.name}
         </h2>
-        <motion.div ref={scope}>
+        <span
+          className={cn(
+            'transition-transform duration-300',
+            scoreBounce ? 'scale-125' : 'scale-100'
+          )}
+        >
           <Badge variant="gold" className="text-sm px-3 py-1">
             {player.score} Puan
           </Badge>
-        </motion.div>
+        </span>
         {player.isSkipped && (
-          <Badge variant="danger" className="text-sm px-3 py-1 ml-auto">
+          <Badge variant="danger" className="text-sm px-3 py-1">
             ⛔ Tur Atlandı
           </Badge>
         )}
@@ -94,16 +103,16 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
         )}
       </div>
 
-      <div className={cn("flex flex-wrap gap-8", isOpponent ? "justify-center" : "justify-start")}>
+      <div className={cn("flex flex-wrap gap-6 overflow-hidden", isOpponent ? "justify-center" : "justify-start")}>
         {/* Tool Cards (Hand) */}
         {player.hand.length > 0 && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <span className="text-xs text-parchment-dark uppercase tracking-wider">
               {isOpponent ? 'Eldeki Kartlar' : 'Elindeki Kartlar'}
             </span>
             <div className="flex gap-2 relative">
               {player.hand.map((card, idx) => (
-                <div 
+                <div
                   key={card.id || idx}
                   onClick={() => handleToolClick(card.toolType)}
                   className={cn(
@@ -115,7 +124,7 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
                 </div>
               ))}
               {!canPlayTools && !isOpponent && player.hand.length > 0 && (
-                 <div className="absolute inset-0 bg-earth-dark/20 z-10" />
+                <div className="absolute inset-0 bg-earth-dark/20 z-10" />
               )}
             </div>
           </div>
@@ -123,22 +132,16 @@ export function PlayerArea({ player, isOpponent = false, className, ...props }: 
 
         {/* Caught Prey */}
         {player.caughtPrey.length > 0 && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <span className="text-xs text-parchment-dark uppercase tracking-wider">
               Avlananlar
             </span>
             <div className="flex gap-2">
-              <AnimatePresence>
-                {player.caughtPrey.map((card, idx) => (
-                  <motion.div 
-                    key={card.id + idx}
-                    layoutId={card.id}
-                    className="scale-75 origin-top-left -mr-8"
-                  >
-                    <PreyCard card={card} />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+              {player.caughtPrey.map((card, idx) => (
+                <div key={card.id + idx} className="scale-75 origin-top-left -mr-8">
+                  <PreyCard card={card} />
+                </div>
+              ))}
             </div>
           </div>
         )}
