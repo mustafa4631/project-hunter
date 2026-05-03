@@ -33,6 +33,7 @@ export interface Player {
   hand: ToolCard[]        // tool cards in hand
   caughtPrey: PreyCard[]  // caught prey cards
   isSkipped: boolean      // affected by trap
+  hasBait?: boolean       // affected by bait
 }
 
 export interface GameState {
