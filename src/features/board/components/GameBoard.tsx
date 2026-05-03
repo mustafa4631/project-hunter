@@ -1,13 +1,14 @@
 'use client'
 
 import * as React from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { WildernessZone } from './WildernessZone'
 import { PlayerArea } from '@/features/player/components/PlayerArea'
 import { Dice } from '@/features/dice/components/Dice'
 import useGameStore from '@/store/gameStore'
 import { Button } from '@/features/ui/components/Button'
 import { cn } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 // ─── Lobby Modal ───────────────────────────────────────────────────────────────
 function LobbyModal() {
@@ -63,6 +64,8 @@ export function GameBoard() {
     phase, players, currentPlayerIndex,
     gameMessage, setGameMessage, initGame, log
   } = useGameStore()
+  const router = useRouter()
+  const [showSettings, setShowSettings] = React.useState(false)
 
   // Animation 8: trap flash via local state
   const [trapFlash, setTrapFlash] = React.useState(false)
@@ -89,6 +92,51 @@ export function GameBoard() {
 
       {/* ── Lobby overlay ── */}
       {phase === 'lobby' && <LobbyModal />}
+
+      {/* ── Settings Button ── */}
+      <div className="fixed top-4 left-4 z-[60]">
+        <button
+          onClick={() => setShowSettings(true)}
+          className="w-10 h-10 flex items-center justify-center bg-earth-dark/50 border border-forest/40 text-gold hover:bg-forest/20 transition-colors rounded-full text-xl"
+          title="Ayarlar"
+        >
+          ⚙️
+        </button>
+      </div>
+
+      {/* ── Settings Overlay ── */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] bg-earth-dark/95 flex items-center justify-center"
+          >
+            <div className="flex flex-col gap-6 w-64">
+              <h2 className="font-serif text-3xl text-gold text-center mb-4">AYARLAR</h2>
+              
+              <Button 
+                onClick={() => {
+                  setShowSettings(false)
+                  router.push('/')
+                }}
+                variant="outline"
+                className="h-14 text-lg"
+              >
+                Ana Menü
+              </Button>
+
+              <Button 
+                onClick={() => setShowSettings(false)}
+                className="h-14 text-lg"
+              >
+                Devam Et
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Animation 8: Trap flash ── */}
       {trapFlash && (
