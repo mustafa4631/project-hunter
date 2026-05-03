@@ -1,11 +1,10 @@
 import { create } from 'zustand'
-import { GameState, PreyCard, ToolCard, Player } from '@/types/game'
+import { GameState, Player } from '@/types/game'
 import { PREY_CARDS, TOOL_CARDS } from '@/features/cards/data/cards'
 
 export interface GameStore extends GameState {
   initGame: (playerName: string) => void
-  rollDice: () => void
-  claimPrey: (preyId: string) => void
+  rollAndClaim: () => void
   endTurn: () => void
   playTrap: (targetPlayerId: string) => void
   playBinoculars: () => void
@@ -16,6 +15,7 @@ export interface GameStore extends GameState {
 
   diceValue: number | null
   diceRolled: boolean
+  rollSuccess: boolean | null
   binocularsActive: boolean
   pendingTrapTarget: boolean
   gameMessage: string
@@ -46,6 +46,7 @@ const useGameStore = create<GameStore>()((set, get) => ({
 
   diceValue: null,
   diceRolled: false,
+  rollSuccess: null,
   binocularsActive: false,
   pendingTrapTarget: false,
   gameMessage: '',
@@ -57,7 +58,7 @@ const useGameStore = create<GameStore>()((set, get) => ({
     const shuffledPrey = shuffleArray([...PREY_CARDS])
     const shuffledTools = shuffleArray([...TOOL_CARDS])
 
-    const wilderness = shuffledPrey.splice(0, 4)
+    const wilderness = shuffledPrey.splice(0, 1) // Exactly 1 card
 
     const player1: Player = {
       id: 'p1',
@@ -94,6 +95,7 @@ const useGameStore = create<GameStore>()((set, get) => ({
       log: ['Oyun başladı!'],
       diceValue: null,
       diceRolled: false,
+      rollSuccess: null,
       binocularsActive: false,
       pendingTrapTarget: false,
       gameMessage: '',
@@ -104,11 +106,14 @@ const useGameStore = create<GameStore>()((set, get) => ({
     }
   },
 
-  rollDice: () => {
+  rollAndClaim: () => {
     const state = get()
     if (state.diceRolled) return
 
     const currentPlayer = state.players[state.currentPlayerIndex]
+    const prey = state.wilderness[0]
+    if (!prey) return
+
     let rawRoll = Math.floor(Math.random() * 6) + 1
     
     let roll = rawRoll
@@ -123,54 +128,49 @@ const useGameStore = create<GameStore>()((set, get) => ({
       set({ players: updatedPlayers })
     }
 
+    const isLegendarySnowLeopard = prey.id === 'p_leopard'
+    const success = isLegendarySnowLeopard ? roll === 6 : roll >= prey.diceThreshold
+
     set({
       diceValue: roll,
       diceRolled: true,
+      rollSuccess: success,
       log: [logMsg, ...state.log]
     })
-  },
 
-  claimPrey: (preyId: string) => {
-    const state = get()
-    if (!state.diceRolled || state.diceValue === null) return
+    setTimeout(() => {
+       const currentState = get()
+       if (success) {
+          const newPlayers = [...currentState.players]
+          const player = { ...currentState.players[currentState.currentPlayerIndex] }
+          player.caughtPrey = [...player.caughtPrey, prey]
+          player.score += prey.points
+          newPlayers[currentState.currentPlayerIndex] = player
 
-    const preyIndex = state.wilderness.findIndex(p => p.id === preyId)
-    if (preyIndex === -1) return
-    const prey = state.wilderness[preyIndex]
-
-    const isLegendarySnowLeopard = prey.id === 'p_leopard'
-    const canClaim = isLegendarySnowLeopard
-      ? state.diceValue === 6
-      : state.diceValue >= prey.diceThreshold
-
-    const currentPlayer = state.players[state.currentPlayerIndex]
-
-    if (canClaim) {
-      const newWilderness = [...state.wilderness]
-      newWilderness.splice(preyIndex, 1)
-
-      const newPlayers = [...state.players]
-      const player = { ...currentPlayer }
-      player.caughtPrey = [...player.caughtPrey, prey]
-      player.score += prey.points
-      newPlayers[state.currentPlayerIndex] = player
-
-      set({
-        wilderness: newWilderness,
-        players: newPlayers,
-        log: [`${player.name}, ${prey.nameTr} avladı! (+${prey.points}p)`, ...state.log],
-        diceRolled: false,
-        diceValue: null,
-        binocularsActive: false
-      })
-
-      get()._refillWilderness()
-      get().endTurn()
-    } else {
-      set({
-        log: ['Yetersiz zar!', ...state.log]
-      })
-    }
+          set({
+             wilderness: [],
+             players: newPlayers,
+             log: [`${player.name}, ${prey.nameTr} avladı! (+${prey.points}p)`, ...currentState.log],
+             diceRolled: false,
+             diceValue: null,
+             rollSuccess: null,
+             binocularsActive: false
+          })
+          get()._refillWilderness()
+          get().endTurn()
+       } else {
+          const failMessage = currentPlayer.isAI 
+            ? 'Rakip tutturamadı, sıra sende.' 
+            : 'Tutturamadın, sıra rakibe geçti.'
+          set({
+             log: [failMessage, ...currentState.log],
+             diceRolled: false,
+             diceValue: null,
+             rollSuccess: null
+          })
+          get().endTurn()
+       }
+    }, 1500)
   },
 
   endTurn: () => {
@@ -195,6 +195,7 @@ const useGameStore = create<GameStore>()((set, get) => ({
       currentPlayerIndex: nextPlayerIndex,
       diceValue: null,
       diceRolled: false,
+      rollSuccess: null,
       binocularsActive: false,
       pendingTrapTarget: false
     })
@@ -283,39 +284,18 @@ const useGameStore = create<GameStore>()((set, get) => ({
          }
       }
 
-      // Check if any prey is definitely claimable right now without rolling (not possible, must roll)
-      
-      // Decide to use bait? If max diceThreshold is 5 or 6, might use bait
-      if (state.wilderness.some(p => p.diceThreshold >= 5)) {
-        const baitIndex = aiPlayer.hand.findIndex(c => c.toolType === 'bait')
-        if (baitIndex !== -1) {
-          get().playBait()
+      const prey = state.wilderness[0]
+      if (prey) {
+        if (prey.diceThreshold >= 5) {
+          const baitIndex = aiPlayer.hand.findIndex(c => c.toolType === 'bait')
+          if (baitIndex !== -1) {
+            get().playBait()
+          }
         }
       }
 
       setTimeout(() => {
-        get().rollDice()
-        
-        setTimeout(() => {
-           const afterRollState = get()
-           const roll = afterRollState.diceValue
-           if (roll !== null) {
-              const claimable = afterRollState.wilderness.filter(p => {
-                if (p.id === 'p_leopard') return roll === 6
-                return roll >= p.diceThreshold
-              })
-
-              if (claimable.length > 0) {
-                 // Pick highest points
-                 const bestPrey = claimable.reduce((prev, curr) => (prev.points > curr.points) ? prev : curr)
-                 get().claimPrey(bestPrey.id)
-              } else {
-                 afterRollState.endTurn()
-              }
-           } else {
-             get().endTurn()
-           }
-        }, 1000)
+        get().rollAndClaim()
       }, 1000)
     }, 1000)
   },
@@ -325,7 +305,7 @@ const useGameStore = create<GameStore>()((set, get) => ({
     let newWilderness = [...state.wilderness]
     let newDeck = [...state.deck]
 
-    while (newWilderness.length < 4 && newDeck.length > 0) {
+    if (newWilderness.length === 0 && newDeck.length > 0) {
       newWilderness.push(newDeck.shift()!)
     }
 
@@ -333,6 +313,9 @@ const useGameStore = create<GameStore>()((set, get) => ({
       wilderness: newWilderness,
       deck: newDeck
     })
+    
+    // Check if game is over after refill attempt
+    get()._checkGameOver()
   },
 
   _checkGameOver: () => {

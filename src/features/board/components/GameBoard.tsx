@@ -92,7 +92,7 @@ export function GameBoard() {
         
         {/* Main Center Area */}
         <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8 relative">
-          <div className="absolute top-4 font-serif text-2xl text-gold tracking-widest">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 font-serif text-4xl font-bold text-gold tracking-widest uppercase bg-earth-dark px-6 py-2 border-y-2 border-gold/30 z-20">
             {isPlayer1Turn ? 'Senin Sıran' : 'Rakibin Sırası'}
           </div>
           <WildernessZone />
